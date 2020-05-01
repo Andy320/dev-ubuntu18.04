@@ -7,6 +7,7 @@ ARG POSTGRESQL=postgresql-11.7
 ARG LLVM=clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04
 ARG HELM=helm-v3.2.0-linux-amd64
 ARG GO=go1.14.2.linux-amd64
+ARG JDK=jdk-8u231-linux-x64
 ARG HOME=/root
 
 ENV PATH=/usr/local/musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -57,9 +58,9 @@ ADD $LLVM.tar.xz /usr/local/
 ENV PATH=/usr/local/$LLVM/bin:$PATH
 
 # -----------------rust----------------- #
-ENV PATH=$HOME/.cargo/bin:$PATH
-ENV RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
-ENV RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
+ENV PATH=$HOME/.cargo/bin:$PATH \
+    RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static \
+    RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
 RUN curl https://sh.rustup.rs -sSf | \
     sh -s -- -y --default-toolchain $TOOLCHAIN && \
     rustup target add x86_64-unknown-linux-musl && \
@@ -70,11 +71,18 @@ RUN mkdir -p $HOME/rust/src $HOME/rust/libs
 # -----------------golang----------------- #
 ADD $GO.tar.gz /usr/local/
 RUN mkdir -p $HOME/go/bin $HOME/go/src
-ENV GOROOT=/usr/local/go
-ENV GOPATH=$HOME/go
-ENV GO111MODULE=on
-ENV GOPROXY=https://goproxy.cn
-ENV PATH=$GOROOT/bin:$PATH
+ENV GOROOT=/usr/local/go \
+    GOPATH=$HOME/go \
+    GO111MODULE=on \
+    GOPROXY=https://goproxy.cn \
+    PATH=$GOROOT/bin:$PATH
+
+# -----------------jdk8----------------- #
+ADD $JDK.tar.gz /usr/local/
+ENV JAVA_HOME=/usr/local/jdk1.8.0_231 \
+    JRE_HOME=/usr/local/jdk1.8.0_231/jre \
+    CLASSPATH=.:/usr/local/jdk1.8.0_231/lib:/usr/local/jdk1.8.0_231/jre/lib \
+    PATH=/usr/local/jdk1.8.0_231/bin:$PATH
 
 # -----------------kubectl----------------- #
 ADD kubectl /usr/local/bin/
@@ -85,10 +93,7 @@ ADD $HELM.tar.gz /tmp/
 RUN mv /tmp/linux-amd64/helm /usr/local/bin/helm && \
     rm -rf /tmp/*
 
-# -----------------openssl----------------- #
-RUN echo "Building OpenSSL" && \
-    ls /usr/include/linux && \
-    mkdir -p /usr/local/musl/include && \
+RUN mkdir -p /usr/local/musl/include && \
     ln -s /usr/include/linux /usr/local/musl/include/linux && \
     ln -s /usr/include/x86_64-linux-gnu/asm /usr/local/musl/include/asm && \
     ln -s /usr/include/asm-generic /usr/local/musl/include/asm-generic && \
@@ -129,7 +134,8 @@ ENV OPENSSL_DIR=/usr/local/musl/ \
     LIBZ_SYS_STATIC=1 \
     TARGET=musl
 
+
 RUN cargo install -f cargo-audit && \
     rm -rf /home/rust/.cargo/registry/
 
-WORKDIR $HOME/rust/src
+WORKDIR $HOME

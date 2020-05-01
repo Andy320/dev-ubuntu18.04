@@ -1,9 +1,8 @@
 [build]
-# Target musl-libc by default when running Cargo.
-#target = "x86_64-unknown-linux-musl"
+target = "x86_64-unknown-linux-musl"
 
-#[target.armv7-unknown-linux-musleabihf]
-#linker = "arm-linux-gnueabihf-gcc"
+[target.armv7-unknown-linux-musleabihf]
+linker = "arm-linux-gnueabihf-gcc"
 
 [source.crates-io]
 replace-with = 'ustc'
