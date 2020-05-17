@@ -138,4 +138,4 @@ ENV OPENSSL_DIR=/usr/local/musl/ \
 RUN cargo install -f cargo-audit && \
     rm -rf /home/rust/.cargo/registry/
 
-WORKDIR $HOME
+WORKDIR $HOME/rust/src
